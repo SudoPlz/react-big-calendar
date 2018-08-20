@@ -7,11 +7,6 @@
   left: 0;
   right: 0;
 }
-.rbc-addons-dnd .rbc-addons-dnd-dragging {
-  opacity: 0.25;
-  -ms-touch-action: manipulation;
-  touch-action: manipulation;
-}
 .rbc-addons-dnd .rbc-addons-dnd-over {
   background-color: rgba(0, 0, 0, 0.3);
 }
@@ -22,8 +17,13 @@
 .rbc-addons-dnd .rbc-event:hover .rbc-addons-dnd-resize-ew-icon {
   display: block;
 }
+.rbc-addons-dnd .rbc-time-view .rbc-addons-dnd-dragged-event {
+  opacity: 0;
+  -ms-touch-action: manipulation;
+  touch-action: manipulation;
+}
 .rbc-addons-dnd.rbc-addons-dnd-is-dragging
-  .rbc-event:not(.rbc-addons-dnd-dragging):not(.rbc-addons-dnd-drag-preview) {
+  .rbc-event:not(.rbc-addons-dnd-dragged-event):not(.rbc-addons-dnd-drag-preview) {
   opacity: 0.5;
 }
 .rbc-addons-dnd .rbc-addons-dnd-resizable {
