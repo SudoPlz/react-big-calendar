@@ -19,8 +19,6 @@
 }
 .rbc-addons-dnd .rbc-time-view .rbc-addons-dnd-dragged-event {
   opacity: 0;
-  -ms-touch-action: manipulation;
-  touch-action: manipulation;
 }
 .rbc-addons-dnd.rbc-addons-dnd-is-dragging
   .rbc-event:not(.rbc-addons-dnd-dragged-event):not(.rbc-addons-dnd-drag-preview) {
