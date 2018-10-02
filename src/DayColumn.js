@@ -12,6 +12,7 @@ import { notify } from './utils/helpers'
 import * as DayEventLayout from './utils/DayEventLayout'
 import TimeSlotGroup from './TimeSlotGroup'
 import TimeGridEvent from './TimeGridEvent'
+import SelectIndicator from './SelectIndicator'
 
 class DayColumn extends React.Component {
   static propTypes = {
@@ -63,15 +64,22 @@ class DayColumn extends React.Component {
   }
 
   componentDidMount() {
-    this.props.selectable && this._selectable()
+    const { selectable, isNow, components } = this.props
 
-    if (this.props.isNow) {
+    selectable && this._selectable()
+
+    this.preSelectionComponent =
+      components && components.preSelectIndicatorComponent
+        ? components.preSelectIndicatorComponent
+        : SelectIndicator
+    if (isNow) {
       this.positionTimeIndicator()
       this.triggerTimeIndicatorUpdate()
     }
   }
 
   componentWillUnmount() {
+    this.preSelectionComponent = null
     this._teardownSelectable()
     window.clearTimeout(this._timeIndicatorTimeout)
   }
@@ -103,6 +111,32 @@ class DayColumn extends React.Component {
     }
   }
 
+  renderSelection() {
+    const { selecting } = this.state
+    if (selecting) {
+      const { top, height, startDate, endDate, noMovementYet } = this.state
+      const { localizer } = this.props
+      const selectDates = { start: startDate, end: endDate }
+      let selectionElement
+      if (noMovementYet) {
+        // if the user is about to start selecting but hasn't started dragging yet
+        const PreSelectionComp = this.preSelectionComponent || SelectIndicator
+        selectionElement = (
+          <PreSelectionComp {...this.state} localizer={localizer} />
+        )
+      } else {
+        // the user has already started dragging/selecting a time slot
+        selectionElement = (
+          <div className="rbc-slot-selection" style={{ top, height }}>
+            <span>{localizer.format(selectDates, 'selectRangeFormat')}</span>
+          </div>
+        )
+      }
+      return selectionElement
+    }
+    return null
+  }
+
   render() {
     const {
       max,
@@ -116,9 +150,7 @@ class DayColumn extends React.Component {
     } = this.props
 
     let { slotMetrics } = this
-    let { selecting, top, height, startDate, endDate } = this.state
-
-    let selectDates = { start: startDate, end: endDate }
+    let { selecting } = this.state
 
     const { className, style } = dayProp(max)
 
@@ -156,11 +188,7 @@ class DayColumn extends React.Component {
           </div>
         </EventContainer>
 
-        {selecting && (
-          <div className="rbc-slot-selection" style={{ top, height }}>
-            <span>{localizer.format(selectDates, 'selectRangeFormat')}</span>
-          </div>
-        )}
+        {this.renderSelection()}
         {isNow && (
           <div ref="timeIndicator" className="rbc-current-time-indicator" />
         )}
@@ -188,7 +216,7 @@ class DayColumn extends React.Component {
       events,
       accessors,
       slotMetrics,
-      minimumStartDifference: Math.ceil(step * timeslots / 2),
+      minimumStartDifference: Math.ceil((step * timeslots) / 2),
     })
 
     return styledEvents.map(({ event, style }, idx) => {
@@ -254,7 +282,8 @@ class DayColumn extends React.Component {
       if (
         this.state.start !== state.start ||
         this.state.end !== state.end ||
-        this.state.selecting !== state.selecting
+        this.state.selecting !== state.selecting ||
+        this.state.noMovementYet === true
       ) {
         this.setState(state)
       }
@@ -280,6 +309,7 @@ class DayColumn extends React.Component {
       return {
         ...selectRange,
         selecting: true,
+        noMovementYet: point.noMovementYet,
 
         top: `${selectRange.top}%`,
         height: `${selectRange.height}%`,
@@ -303,9 +333,14 @@ class DayColumn extends React.Component {
     selector.on('selectStart', maybeSelect)
 
     selector.on('beforeSelect', box => {
+      const didNotClickOnAnEvent = !isEvent(findDOMNode(this), box)
+      if (didNotClickOnAnEvent) {
+        maybeSelect({ ...box, noMovementYet: true })
+      }
+
       if (this.props.selectable !== 'ignoreEvents') return
 
-      return !isEvent(findDOMNode(this), box)
+      return didNotClickOnAnEvent
     })
 
     selector.on('click', box => selectorClicksHandler(box, 'click'))
