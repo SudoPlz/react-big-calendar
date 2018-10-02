@@ -21,7 +21,8 @@ class DayColumn extends React.Component {
     date: PropTypes.instanceOf(Date).isRequired,
     min: PropTypes.instanceOf(Date).isRequired,
     max: PropTypes.instanceOf(Date).isRequired,
-    getNow: PropTypes.func.isRequired,
+    timeIndicatorTime: PropTypes.instanceOf(Date),
+    // getNow: PropTypes.func.isRequired,
     isNow: PropTypes.bool,
 
     rtl: PropTypes.bool,
@@ -64,7 +65,7 @@ class DayColumn extends React.Component {
   }
 
   componentDidMount() {
-    const { selectable, isNow, components } = this.props
+    const { selectable, components } = this.props
 
     selectable && this._selectable()
 
@@ -72,16 +73,11 @@ class DayColumn extends React.Component {
       components && components.preSelectIndicatorComponent
         ? components.preSelectIndicatorComponent
         : SelectIndicator
-    if (isNow) {
-      this.positionTimeIndicator()
-      this.triggerTimeIndicatorUpdate()
-    }
   }
 
   componentWillUnmount() {
     this.preSelectionComponent = null
     this._teardownSelectable()
-    window.clearTimeout(this._timeIndicatorTimeout)
   }
 
   componentWillReceiveProps(nextProps) {
@@ -92,23 +88,17 @@ class DayColumn extends React.Component {
     this.slotMetrics = this.slotMetrics.update(nextProps)
   }
 
-  triggerTimeIndicatorUpdate() {
-    // Update the position of the time indicator every minute
-    this._timeIndicatorTimeout = window.setTimeout(() => {
-      this.positionTimeIndicator()
-      this.triggerTimeIndicatorUpdate()
-    }, 60000)
-  }
+  getTimeIndicatorPosition() {
+    const { min, max, timeIndicatorTime } = this.props
 
-  positionTimeIndicator() {
-    const { min, max, getNow } = this.props
-    const current = getNow()
-    const timeIndicator = this.refs.timeIndicator
-
-    if (current >= min && current <= max) {
-      const { top } = this.slotMetrics.getRange(current, current)
-      timeIndicator.style.top = `${top}%`
+    if (timeIndicatorTime >= min && timeIndicatorTime <= max) {
+      const { top } = this.slotMetrics.getRange(
+        timeIndicatorTime,
+        timeIndicatorTime
+      )
+      return `${top}%`
     }
+    return null
   }
 
   renderSelection() {
@@ -133,6 +123,24 @@ class DayColumn extends React.Component {
         )
       }
       return selectionElement
+    }
+    return null
+  }
+
+  renderTimeIndicator() {
+    const { timeIndicatorTime, isNow } = this.props
+    if (isNow && timeIndicatorTime) {
+      const top = this.getTimeIndicatorPosition()
+      if (top) {
+        return (
+          <div
+            className="rbc-current-time-indicator"
+            style={{
+              top,
+            }}
+          />
+        )
+      }
     }
     return null
   }
@@ -189,9 +197,7 @@ class DayColumn extends React.Component {
         </EventContainer>
 
         {this.renderSelection()}
-        {isNow && (
-          <div ref="timeIndicator" className="rbc-current-time-indicator" />
-        )}
+        {this.renderTimeIndicator()}
       </div>
     )
   }
