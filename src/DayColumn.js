@@ -21,7 +21,6 @@ class DayColumn extends React.Component {
     date: PropTypes.instanceOf(Date).isRequired,
     min: PropTypes.instanceOf(Date).isRequired,
     max: PropTypes.instanceOf(Date).isRequired,
-    timeIndicatorTime: PropTypes.instanceOf(Date),
     // getNow: PropTypes.func.isRequired,
     isNow: PropTypes.bool,
 
@@ -88,19 +87,6 @@ class DayColumn extends React.Component {
     this.slotMetrics = this.slotMetrics.update(nextProps)
   }
 
-  getTimeIndicatorPosition() {
-    const { min, max, timeIndicatorTime } = this.props
-
-    if (timeIndicatorTime >= min && timeIndicatorTime <= max) {
-      const { top } = this.slotMetrics.getRange(
-        timeIndicatorTime,
-        timeIndicatorTime
-      )
-      return `${top}%`
-    }
-    return null
-  }
-
   renderSelection() {
     const { selecting } = this.state
     if (selecting) {
@@ -123,24 +109,6 @@ class DayColumn extends React.Component {
         )
       }
       return selectionElement
-    }
-    return null
-  }
-
-  renderTimeIndicator() {
-    const { timeIndicatorTime, isNow } = this.props
-    if (isNow && timeIndicatorTime) {
-      const top = this.getTimeIndicatorPosition()
-      if (top) {
-        return (
-          <div
-            className="rbc-current-time-indicator"
-            style={{
-              top,
-            }}
-          />
-        )
-      }
     }
     return null
   }
@@ -197,7 +165,6 @@ class DayColumn extends React.Component {
         </EventContainer>
 
         {this.renderSelection()}
-        {this.renderTimeIndicator()}
       </div>
     )
   }
